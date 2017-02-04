@@ -1,9 +1,9 @@
 import json
-from six.moves.urllib.parse import parse_qs
 import logging
 
 from channels import Group
 from channels.sessions import channel_session
+from six.moves.urllib.parse import parse_qs
 
 
 @channel_session
@@ -13,6 +13,7 @@ def ws_add(message, room):
         return
     logging.info('Adding websocket with username %s in room %s',
                  query['username'][0], room)
+    message.reply_channel.send({'accept': True})
     Group('chat-%s' % room).add(message.reply_channel)
     message.channel_session['room'] = room
     message.channel_session['username'] = query['username'][0]
@@ -32,3 +33,8 @@ def ws_echo(message):
             'username': message.channel_session['username']
         }),
     })
+
+
+@channel_session
+def ws_disconnect(message):
+    Group("chat-%s" % message.channel_session['room']).discard(message.reply_channel)
